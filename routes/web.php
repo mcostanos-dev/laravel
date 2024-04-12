@@ -1,24 +1,8 @@
 <?php
 
+use App\Http\Controllers\ListingController;
 use Illuminate\Support\Facades\Route;
-use App\Models\Listing;
 
-Route::get('/', function () {
-    return view(
-        'listings',
-        [
-            'heading' => 'Latest Listings',
-            'listings' => Listing::all()
-        ]
-    );
-})->name('home');
+Route::get('/', [ListingController::class, 'index'])->name('home');
 
-Route::get('/listing/{listingId}', function (Listing $listingId) {
-
-    return view(
-        'listing',
-        [
-            'listing' => $listingId
-        ]
-    );
-})->name('listing');
+Route::get('/listing/{listingId}', [ListingController::class, 'show'])->name('listing');
