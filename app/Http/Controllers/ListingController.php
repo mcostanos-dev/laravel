@@ -19,7 +19,6 @@ class ListingController extends Controller
     //Show all listing
     public function index()
     {
-        // dd(Listing::latest()->filter(request(['tag', 'search']))->paginate(2));
         return view(
             'listings.index',
             [
@@ -45,11 +44,49 @@ class ListingController extends Controller
         return view('listings.create');
     }
 
+    //Create Listing
+    public function edit(Listing $listing)
+    {
+
+        return view('listings.edit', ['listing' => $listing]);
+    }
+
+    //Delete Listing
+    public function destroy(Listing $listing)
+    {
+        $listing->delete();
+        return redirect('/')->with('message', "Succesfully deleted");
+    }
+
+    //Update Listing
+    public function update(Request $request, Listing $listing)
+    {
+        $validatedData = $request->validate([
+            'title' => 'required',
+            'company' => 'required',
+            'location' => 'required',
+            'website' => 'required',
+            'email' => ['required', 'email'],
+            'tags' => 'required',
+            'description' => 'required',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        // Handle logo upload
+        if ($request->hasFile('logo')) {
+            $validatedData['logo'] = $request->file('logo')->store('logos', 'public');
+        }
+
+        $listing->update($validatedData);
+
+        return back()->with('message', 'Listing Updated successfully!');
+    }
+
     //Store Listing
     public function store(Request $request)
     {
-
-        $formFields = $request->validate([
+        // Validate form fields
+        $validatedData = $request->validate([
             'title' => 'required',
             'company' => ['required', Rule::unique('listings', 'company')],
             'location' => 'required',
@@ -57,14 +94,21 @@ class ListingController extends Controller
             'email' => ['required', 'email'],
             'tags' => 'required',
             'description' => 'required',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
+        // Handle logo upload
         if ($request->hasFile('logo')) {
-            $formFields['logo'] = $request->file(('logo'))->store('logos', 'public');
+            $validatedData['logo'] = $request->file('logo')->store('logos', 'public');
         }
 
-        Listing::create($formFields);
+        $validatedData['user_id'] = auth()->user()->id;
 
-        return redirect('/')->with('message', 'Listing created succesfully!');
+
+        // Create new listing
+        Listing::create($validatedData);
+
+        // Redirect back with success message
+        return redirect('/')->with('message', 'Listing created successfully!');
     }
 }
